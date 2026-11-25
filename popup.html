@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <div class="brand"><img src="icons/icon48.png" alt="" width="24" height="24"><b>Custom Autofill</b></div>
+    <select id="profile" aria-label="Active profile"></select>
+  </header>
+
+  <section class="actions">
+    <button id="fill" class="primary">Fill this page</button>
+    <button id="undo" class="ghost">Undo</button>
+  </section>
+  <div id="status" role="status"></div>
+
+  <label class="site-row">
+    <span id="siteLabel">Auto-fill on this site</span>
+    <span class="switch"><input type="checkbox" id="siteAuto"><i></i></span>
+  </label>
+
+  <nav class="tabs">
+    <button data-tab="rules" class="on">Rules</button>
+    <button data-tab="detected">Detected</button>
+    <button data-tab="settings">Settings</button>
+  </nav>
+
+  <main>
+    <section id="tab-rules">
+      <p class="hint">Each rule: any of these field names → this answer. Press Enter to add a name.</p>
+      <div id="rules"></div>
+      <button id="addRule" class="dashed">+ Add rule</button>
+    </section>
+
+    <section id="tab-detected" hidden>
+      <p class="hint">See which fields on this page match a rule, and add rules for the ones that don't.</p>
+      <button id="scan" class="ghost wide">Scan this page</button>
+      <ul id="found" class="list"></ul>
+    </section>
+
+    <section id="tab-settings" hidden>
+      <h4>Behaviour</h4>
+      <label class="check"><input type="checkbox" id="skipFilled"> Don’t overwrite fields that already have a value</label>
+      <label class="check"><input type="checkbox" id="highlight"> Briefly highlight filled fields</label>
+
+      <h4>Profile</h4>
+      <div class="row">
+        <input id="pname" placeholder="Profile name">
+        <button id="rename" class="ghost">Rename</button>
+      </div>
+      <div class="row">
+        <button id="newp" class="ghost">New</button>
+        <button id="dupp" class="ghost">Duplicate</button>
+        <button id="delp" class="ghost danger">Delete</button>
+      </div>
+
+      <h4>Auto-fill sites</h4>
+      <ul id="sites" class="list"></ul>
+      <div class="row">
+        <input id="siteInput" placeholder="example.com or example.com/form">
+        <button id="siteAdd" class="ghost">Add</button>
+      </div>
+
+      <h4>Backup</h4>
+      <textarea id="io" rows="4" spellcheck="false" placeholder="Export puts your profiles here. Paste JSON here to import."></textarea>
+      <div class="row">
+        <button id="export" class="ghost">Export</button>
+        <button id="import" class="ghost">Import</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>Shortcut: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> fills the page · change it at chrome://extensions/shortcuts</footer>
+  <script src="popup.js"></script>
+</body>
+</html>
