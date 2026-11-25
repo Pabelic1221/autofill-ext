@@ -423,6 +423,44 @@ $("#newFlow").onclick = () => {
   status("Flow created. Add a step for each page of the form.", "ok");
 };
 
+/* ---------- updates (GitHub) ---------- */
+function renderUpdate(info) {
+  const when = info?.checkedAt ? ` · checked ${new Date(info.checkedAt).toLocaleString()}` : "";
+  $("#verLine").textContent = `Installed v${chrome.runtime.getManifest().version}${when}`;
+  const on = !!info?.available;
+  $("#updBanner").hidden = !on;
+  if (on) $("#updText").textContent = `Version ${info.remote} is available (you have ${info.local})`;
+}
+
+function initUpdates(info) {
+  const text = (id, key, fix = v => v) => {
+    $(id).value = S.gh[key] || "";
+    $(id).oninput = e => { S.gh[key] = fix(e.target.value); persist(); };
+  };
+  const flag = (id, key) => {
+    $(id).checked = !!S.gh[key];
+    $(id).onchange = e => { S.gh[key] = e.target.checked; persist(); };
+  };
+  text("#ghRepo", "repo", v => v.trim().replace(/^https?:\/\/github\.com\//, "").replace(/\.git$/, "").replace(/\/+$/, ""));
+  text("#ghBranch", "branch", v => v.trim() || "main");
+  text("#ghPath", "path", v => v.trim().replace(/^\/+|\/+$/g, ""));
+  text("#ghToken", "token", v => v.trim());
+  flag("#ghAutoCheck", "autoCheck");
+  flag("#ghAutoApply", "autoApply");
+
+  $("#updCheck").onclick = async () => {
+    status("Checking GitHub…");
+    try {
+      const i = await Updater.check();
+      renderUpdate(i);
+      status(i.available ? `Version ${i.remote} is available` : "You're up to date", i.available ? "ok" : "");
+    } catch (e) { status(e.message, "warn"); }
+  };
+  $("#updOpen").onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL("update.html") });
+  $("#updNow").onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL("update.html?apply=1") });
+  renderUpdate(info);
+}
+
 /* ---------- init ---------- */
 (async () => {
   S = await chrome.storage.local.get(null);
@@ -432,6 +470,8 @@ $("#newFlow").onclick = () => {
   S.skipFilled ??= false;
   S.highlight ??= true;
   S.smart ??= true;
+  const updateInfo = S.updateInfo; delete S.updateInfo;   // owned by the updater, don't overwrite
+  S.gh = { ...Updater.DEFAULTS, ...(S.gh || {}) };
 
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -446,4 +486,5 @@ $("#newFlow").onclick = () => {
   $("#skipFilled").checked = S.skipFilled;
   $("#highlight").checked = S.highlight;
   renderProfiles(); renderRules(); renderSites(); syncSite();
+  initUpdates(updateInfo);
 })();

@@ -15,6 +15,10 @@
     <button id="undo" class="ghost">Undo</button>
   </section>
   <div id="status" role="status"></div>
+  <div id="updBanner" class="update" hidden>
+    <span id="updText"></span>
+    <button id="updNow">Update now</button>
+  </div>
 
   <label class="site-row">
     <span id="siteLabel">Auto-fill on this site</span>
@@ -71,6 +75,21 @@
         <button id="siteAdd" class="ghost">Add</button>
       </div>
 
+      <h4>Updates (GitHub)</h4>
+      <p class="hint" id="verLine"></p>
+      <div class="row">
+        <input id="ghRepo" placeholder="owner/repo">
+        <input id="ghBranch" placeholder="main" style="max-width:90px">
+      </div>
+      <div class="row"><input id="ghPath" placeholder="Folder in repo (blank = repo root)"></div>
+      <div class="row"><input id="ghToken" type="password" placeholder="Token (only needed for private repos)"></div>
+      <label class="check"><input type="checkbox" id="ghAutoCheck"> Check for updates every 6 hours</label>
+      <label class="check"><input type="checkbox" id="ghAutoApply"> Install updates automatically (needs folder access)</label>
+      <div class="row">
+        <button id="updCheck" class="ghost">Check now</button>
+        <button id="updOpen" class="ghost">Set up / update…</button>
+      </div>
+
       <h4>Backup</h4>
       <textarea id="io" rows="4" spellcheck="false" placeholder="Export puts your profiles here. Paste JSON here to import."></textarea>
       <div class="row">
@@ -81,6 +100,7 @@
   </main>
 
   <footer>Shortcut: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> fills the page · change it at chrome://extensions/shortcuts</footer>
+  <script src="updater.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

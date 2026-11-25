@@ -122,3 +122,12 @@ kbd{background:var(--card);border:1px solid var(--border);border-radius:4px;padd
 .num{width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent);
   font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
 .step .opts{margin-left:0}
+
+/* updates */
+input[type=password]{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:6px 8px;min-width:0}
+input[type=password]:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.update{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 14px 8px;
+  padding:8px 12px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:12px;font-weight:600}
+.update[hidden]{display:none}
+.update button{background:var(--btn);color:#fff;padding:4px 10px;font-size:12px;flex:none}
