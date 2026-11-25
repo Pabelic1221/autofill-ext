@@ -28,7 +28,7 @@ const defaults = () => {
   };
 };
 
-let S, host = null;
+let S, host = null, tabUrl = "";
 const persist = () => chrome.storage.local.set(S);
 const profile = () => S.profiles.find(p => p.id === S.activeProfile) || S.profiles[0];
 
@@ -123,6 +123,89 @@ $("#addRule").onclick = () => {
 };
 
 /* ---------- detected fields ---------- */
+const HOW = {
+  selector: "your CSS selector", name: "field name", synonym: "known synonym",
+  autocomplete: "autocomplete hint", type: "input type", similar: "similar wording"
+};
+const nk = x => String(x).toLowerCase().replace(/[^a-z0-9]/g, "");
+
+// answers worth offering for a free-text field, taken from the rules you already have
+function suggestionsFor(f) {
+  const rules = profile().rules.filter(r => r.value);
+  const lab = nk(f.label), out = [];
+  const add = v => { if (v && !out.includes(v)) out.push(v); };
+  rules.forEach(r => {
+    if (r.keys.some(k => { const n = nk(k); return n && lab && (lab.includes(n) || n.includes(lab)); })) add(r.value);
+  });
+  const pat = {
+    email: /@/, tel: /^[+\d][\d\s()-]{6,}$/, url: /^https?:/,
+    number: /^-?\d+([.,]\d+)?$/, date: /^\d{4}-\d{2}-\d{2}$|^\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}$/
+  }[f.itype];
+  if (pat) rules.forEach(r => pat.test(r.value) && add(r.value));
+  return out.slice(0, 5);
+}
+
+function foundItem(f) {
+  const save = value => {
+    const p = profile();
+    let r = f.ruleId && p.rules.find(x => x.id === f.ruleId);
+    if (r) r.value = value;
+    else {
+      r = { id: uid(), keys: [f.label], value, enabled: true };
+      p.rules.push(r);
+      f.ruleId = r.id; f.matched = true;
+    }
+    f.value = value; f.resolved = true; f.how = f.how || "name";
+    persist(); renderRules();
+    li.replaceWith(foundItem(f));
+    status(`Saved: ${f.label} → ${value}`, "ok");
+  };
+
+  const bad = f.matched && f.resolved === false;
+  const dot = h("span", { class: "dot" + (bad ? " bad" : f.matched ? " ok" : "") });
+  const meta = h("div", { class: "meta" }, h("b", { title: f.label }, f.label),
+    h("small", {}, f.type + (f.itype && f.itype !== f.type && f.type === "text" ? " · " + f.itype : "") +
+      (!f.matched && f.concept ? " · looks like: " + f.concept : "")));
+
+  const right = f.matched
+    ? h("span", { class: "tag" + (bad ? " bad" : "") }, bad ? "no option match" : "matched")
+    : h("button", { class: "mini", onclick: () => {
+        const r = { id: uid(), keys: [f.label], value: "", enabled: true };
+        profile().rules.push(r); persist(); renderRules();
+        showTab("rules");
+        $("#rules").lastElementChild.querySelector(".answer").focus();
+      } }, "+ Rule");
+
+  const li = h("li", { class: "found" }, h("div", { class: "top" }, dot, meta, right));
+
+  if (f.matched) {
+    li.append(h("div", { class: "line" + (bad ? " bad" : "") },
+      bad ? `“${f.value}” isn’t one of the options, pick one below`
+          : f.value === "" ? "Rule has no answer yet" : `Will fill: “${f.value}”` + (HOW[f.how] ? ` · via ${HOW[f.how]}` : "")));
+  }
+
+  const choices = f.options || suggestionsFor(f);
+  if (choices.length) {
+    const LIMIT = 10;
+    const row = h("div", { class: "opts" },
+      h("small", {}, f.options ? "Options:" : "Suggestions:"));
+    const chip = v => h("button", {
+      class: "opt" + (f.matched && f.value != null && nk(f.value) === nk(v) ? " on" : ""),
+      title: "Use this as the answer", onclick: () => save(v)
+    }, v);
+    choices.slice(0, LIMIT).forEach(v => row.append(chip(v)));
+    if (choices.length > LIMIT) {
+      const more = h("button", { class: "opt more", onclick: () => {
+        more.remove();
+        choices.slice(LIMIT).forEach(v => row.append(chip(v)));
+      } }, `+${choices.length - LIMIT} more`);
+      row.append(more);
+    }
+    li.append(row);
+  }
+  return li;
+}
+
 $("#scan").onclick = async () => {
   const found = (await inPage("scan")).flat();
   const ul = $("#found");
@@ -130,24 +213,7 @@ $("#scan").onclick = async () => {
     ul.replaceChildren(h("li", { class: "empty" }, "Nothing found. Reload the page once, or open a normal website."));
     return;
   }
-  ul.replaceChildren(...found.map(f => {
-    const action = f.matched
-      ? h("span", { class: "tag" }, "matched")
-      : h("button", { class: "mini", onclick: e => {
-          const r = { id: uid(), keys: [f.label], value: "", enabled: true };
-          profile().rules.push(r);
-          persist();
-          renderRules();
-          e.target.replaceWith(h("span", { class: "tag" }, "added"));
-          showTab("rules");
-          $("#rules").lastElementChild.querySelector(".answer").focus();
-        } }, "+ Rule");
-    return h("li", {},
-      h("span", { class: "dot" + (f.matched ? " ok" : "") }),
-      h("div", { class: "meta" }, h("b", {}, f.label),
-        h("small", {}, f.type + (f.options ? " · " + f.options.join(", ") : ""))),
-      action);
-  }));
+  ul.replaceChildren(...found.map(foundItem));
 };
 
 /* ---------- fill / undo ---------- */
@@ -198,6 +264,7 @@ function renderProfiles() {
   $("#profile").replaceChildren(...S.profiles.map(p =>
     h("option", { value: p.id, textContent: p.name, selected: p.id === S.activeProfile })));
   $("#pname").value = profile().name;
+  renderFlows();
 }
 $("#profile").onchange = e => {
   S.activeProfile = e.target.value;
@@ -238,11 +305,12 @@ $("#delp").onclick = e => {
 };
 
 /* ---------- behaviour + backup ---------- */
+$("#smart").onchange = e => { S.smart = e.target.checked; persist(); };
 $("#skipFilled").onchange = e => { S.skipFilled = e.target.checked; persist(); };
 $("#highlight").onchange = e => { S.highlight = e.target.checked; persist(); };
 
 $("#export").onclick = async () => {
-  const json = JSON.stringify({ profiles: S.profiles }, null, 2);
+  const json = JSON.stringify({ profiles: S.profiles, flows: S.flows }, null, 2);
   $("#io").value = json;
   try { await navigator.clipboard.writeText(json); status("Exported and copied to clipboard", "ok"); }
   catch { status("Exported. Copy the text below.", "ok"); }
@@ -252,15 +320,107 @@ $("#import").onclick = () => {
     const data = JSON.parse($("#io").value);
     const list = Array.isArray(data) ? data : data.profiles;
     if (!Array.isArray(list)) throw 0;
-    list.forEach(p => S.profiles.push({
-      id: uid(), name: String(p.name || "Imported"),
-      rules: (p.rules || []).map(r => ({
-        id: uid(), keys: (r.keys || []).map(String), value: String(r.value ?? ""), enabled: r.enabled !== false
+    const idMap = {};
+    list.forEach(p => {
+      const id = !p.id || S.profiles.some(x => x.id === p.id) ? uid() : p.id;
+      idMap[p.id] = id;
+      S.profiles.push({
+        id, name: String(p.name || "Imported"),
+        rules: (p.rules || []).map(r => ({
+          id: uid(), keys: (r.keys || []).map(String), value: String(r.value ?? ""), enabled: r.enabled !== false
+        }))
+      });
+    });
+    const flows = Array.isArray(data.flows) ? data.flows : [];
+    flows.forEach(f => S.flows.push({
+      id: uid(), name: String(f.name || "Imported flow"), site: String(f.site || ""), enabled: f.enabled !== false,
+      steps: (f.steps || []).map(st => ({
+        id: uid(), url: String(st.url || ""), click: String(st.click || ""), delay: +st.delay || 1000,
+        profileId: idMap[st.profileId] || (S.profiles.some(x => x.id === st.profileId) ? st.profileId : "")
       }))
     }));
     persist(); renderProfiles(); renderRules();
-    status(`Imported ${list.length} profile(s)`, "ok");
+    status(`Imported ${list.length} profile(s), ${flows.length} flow(s)`, "ok");
   } catch { status("That doesn't look like valid export JSON", "warn"); }
+};
+
+/* ---------- flows ---------- */
+const pagePath = () => { try { const u = new URL(tabUrl); return u.host + u.pathname; } catch { return ""; } };
+const newStep = url => ({ id: uid(), url, profileId: "", click: "", delay: 1000 });
+
+function stepCard(flow, step, idx) {
+  const picks = h("div", { class: "opts" });
+  const clickIn = h("input", {
+    placeholder: "Then click… e.g. Next (blank = none)", value: step.click || "",
+    oninput: e => { step.click = e.target.value; persist(); }
+  });
+  const pick = h("button", { class: "mini", title: "Choose from this page's buttons", onclick: async () => {
+    const btns = [...new Set((await inPage("buttons")).flat())];
+    picks.replaceChildren(
+      h("small", {}, btns.length ? "Buttons on this page:" : "No buttons found on this page"),
+      ...btns.map(b => h("button", { class: "opt", onclick: () => {
+        clickIn.value = b; step.click = b; persist(); picks.replaceChildren();
+      } }, b)));
+  } }, "Pick");
+
+  const delay = h("select", { title: "Wait before clicking", onchange: e => { step.delay = +e.target.value; persist(); } },
+    ...[[500, "0.5s"], [1000, "1s"], [2000, "2s"], [3000, "3s"]].map(([v, l]) =>
+      h("option", { value: String(v), textContent: "wait " + l })));
+  delay.value = String(step.delay ?? 1000);
+
+  const prof = h("select", { class: "grow", title: "Answers to use on this page",
+    onchange: e => { step.profileId = e.target.value; persist(); } },
+    h("option", { value: "", textContent: "Use active profile" }),
+    ...S.profiles.map(p => h("option", { value: p.id, textContent: "Use: " + p.name })));
+  prof.value = step.profileId || "";
+
+  return h("div", { class: "step" },
+    h("div", { class: "row" },
+      h("span", { class: "num" }, String(idx + 1)),
+      h("input", { placeholder: "Page URL contains… (blank = any page)", value: step.url || "",
+        oninput: e => { step.url = e.target.value; persist(); } }),
+      h("button", { class: "del", title: "Remove step", onclick: () => {
+        flow.steps = flow.steps.filter(s => s !== step); persist(); renderFlows();
+      } }, "×")),
+    h("div", { class: "row" }, prof),
+    h("div", { class: "row" }, clickIn, pick, delay),
+    picks);
+}
+
+function flowCard(flow) {
+  const card = h("div", { class: "flow" + (flow.enabled === false ? " off" : "") },
+    h("div", { class: "row" },
+      h("input", { value: flow.name, placeholder: "Flow name", oninput: e => { flow.name = e.target.value; persist(); } }),
+      h("span", { class: "switch", title: "Enable / disable flow" },
+        h("input", { type: "checkbox", checked: flow.enabled !== false, onchange: e => {
+          flow.enabled = e.target.checked; card.classList.toggle("off", !flow.enabled); persist();
+        } }), h("i")),
+      h("button", { class: "del", title: "Delete flow", onclick: () => {
+        S.flows = S.flows.filter(f => f !== flow); persist(); renderFlows();
+      } }, "🗑")),
+    h("div", { class: "row" },
+      h("input", { value: flow.site, placeholder: "Site, e.g. example.com",
+        oninput: e => { flow.site = e.target.value.trim(); persist(); } })),
+    ...flow.steps.map((s, i) => stepCard(flow, s, i)),
+    h("div", { class: "row" },
+      h("button", { class: "ghost", onclick: () => { flow.steps.push(newStep("")); persist(); renderFlows(); } }, "+ Add step"),
+      h("button", { class: "ghost", disabled: !host, title: "Add a step for the page you're on",
+        onclick: () => { flow.steps.push(newStep(pagePath())); persist(); renderFlows(); } }, "+ This page")));
+  return card;
+}
+
+function renderFlows() {
+  const box = $("#flows");
+  if (!box) return;
+  box.replaceChildren(...S.flows.map(flowCard));
+  if (!S.flows.length) box.append(h("ul", { class: "list" }, h("li", { class: "empty" }, "No flows yet")));
+}
+
+$("#newFlow").onclick = () => {
+  S.flows.push({ id: uid(), name: host || "New flow", site: host || "", enabled: true,
+    steps: host ? [newStep(pagePath())] : [] });
+  persist(); renderFlows(); showTab("flows");
+  status("Flow created. Add a step for each page of the form.", "ok");
 };
 
 /* ---------- init ---------- */
@@ -268,17 +428,21 @@ $("#import").onclick = () => {
   S = await chrome.storage.local.get(null);
   if (!S.profiles?.length) { S = defaults(); await persist(); }
   S.autoSites ||= [];
+  S.flows ||= [];
   S.skipFilled ??= false;
   S.highlight ??= true;
+  S.smart ??= true;
 
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    tabUrl = tab.url || "";
     const u = new URL(tab.url);
     if (/^https?:$/.test(u.protocol)) host = u.hostname;
   } catch {}
   if (host) $("#siteLabel").textContent = `Auto-fill on ${host}`;
   else { $("#siteLabel").textContent = "Auto-fill (open a website first)"; $(".site-row").classList.add("disabled"); }
 
+  $("#smart").checked = S.smart;
   $("#skipFilled").checked = S.skipFilled;
   $("#highlight").checked = S.highlight;
   renderProfiles(); renderRules(); renderSites(); syncSite();

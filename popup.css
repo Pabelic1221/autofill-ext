@@ -94,3 +94,31 @@ h4:first-child{margin-top:0}
 
 footer{padding:8px 14px 12px;color:var(--muted);font-size:11px;border-top:1px solid var(--border)}
 kbd{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:0 4px;font-size:10px}
+
+/* detected fields */
+.list li.found{display:block}
+.found .top{display:flex;align-items:center;gap:8px}
+.found .line{margin:5px 0 0 16px;font-size:12px;color:var(--muted)}
+.found .line.bad{color:var(--danger)}
+.dot.bad{background:var(--danger)}
+.tag.bad{background:var(--warn-soft);color:var(--danger)}
+.opts{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:6px 0 0 16px}
+.opts small{color:var(--muted);margin-right:2px}
+.opt{padding:2px 9px;font-size:12px;border-radius:20px;background:var(--card);
+  border:1px solid var(--border);color:var(--text);max-width:170px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.opt:hover{border-color:var(--accent)}
+.opt.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);font-weight:600}
+.opt.more{color:var(--muted);border-style:dashed}
+
+/* flows */
+.flow{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px;margin-bottom:10px}
+.flow.off{opacity:.55}
+.flow .row{align-items:center}
+.step{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px;margin:6px 0}
+.step .row{margin:4px 0}
+.step select{max-width:none}
+.step select.grow{flex:1}
+.num{width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent);
+  font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
+.step .opts{margin-left:0}

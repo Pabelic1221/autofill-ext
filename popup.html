@@ -24,6 +24,7 @@
   <nav class="tabs">
     <button data-tab="rules" class="on">Rules</button>
     <button data-tab="detected">Detected</button>
+    <button data-tab="flows">Flows</button>
     <button data-tab="settings">Settings</button>
   </nav>
 
@@ -35,13 +36,20 @@
     </section>
 
     <section id="tab-detected" hidden>
-      <p class="hint">See which fields on this page match a rule, and add rules for the ones that don't.</p>
+      <p class="hint">See each field on this page, what it accepts, and what will be filled. Click an option or suggestion to save it as the answer.</p>
       <button id="scan" class="ghost wide">Scan this page</button>
       <ul id="found" class="list"></ul>
     </section>
 
+    <section id="tab-flows" hidden>
+      <p class="hint">A flow fills each page of a multi-page form in turn, and can click Next for you. Each step is matched by the page's URL.</p>
+      <div id="flows"></div>
+      <button id="newFlow" class="dashed">+ New flow for this site</button>
+    </section>
+
     <section id="tab-settings" hidden>
       <h4>Behaviour</h4>
+      <label class="check"><input type="checkbox" id="smart"> Smart matching (synonyms, typos, autocomplete hints)</label>
       <label class="check"><input type="checkbox" id="skipFilled"> Don’t overwrite fields that already have a value</label>
       <label class="check"><input type="checkbox" id="highlight"> Briefly highlight filled fields</label>
 

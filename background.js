@@ -12,3 +12,12 @@ chrome.commands.onCommand.addListener(async cmd => {
     setTimeout(() => chrome.action.setBadgeText({ text: "", tabId: tab.id }), 3000);
   } catch (e) { /* restricted page */ }
 });
+
+// badge from auto-fill / flows running inside a page
+chrome.runtime.onMessage.addListener((msg, sender) => {
+  if (msg?.type !== "badge" || !sender.tab) return;
+  const id = sender.tab.id;
+  chrome.action.setBadgeBackgroundColor({ color: "#4f46e5", tabId: id });
+  chrome.action.setBadgeText({ text: String(msg.n), tabId: id });
+  setTimeout(() => chrome.action.setBadgeText({ text: "", tabId: id }), 3000);
+});
