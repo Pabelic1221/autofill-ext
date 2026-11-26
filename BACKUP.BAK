@@ -1,0 +1,203 @@
+{
+  "profiles": [
+    {
+      "id": "1zry6zu",
+      "name": "Default",
+      "rules": [
+        {
+          "enabled": true,
+          "id": "043iq0t",
+          "keys": [
+            "Patient_Concent_code"
+          ],
+          "value": "Y"
+        },
+        {
+          "enabled": true,
+          "id": "ky60x7d",
+          "keys": [
+            "physical_exam_head"
+          ],
+          "value": "ESSENTIALLY WELL"
+        },
+        {
+          "enabled": true,
+          "id": "14qdsi8",
+          "keys": [
+            "physical_exam_conjuctiva_remarks"
+          ],
+          "value": "ESSENTIALLY WELL"
+        },
+        {
+          "enabled": true,
+          "id": "5h8p9xc",
+          "keys": [
+            "physical_exam_breast_remarks"
+          ],
+          "value": "ESSENTIALLY WELL"
+        },
+        {
+          "enabled": true,
+          "id": "wf79ut2",
+          "keys": [
+            "physical_exam_thorax_remarks"
+          ],
+          "value": "ESSENTIALLY WELL"
+        },
+        {
+          "enabled": true,
+          "id": "r32ffah",
+          "keys": [
+            "physical_exam_thorax_remarks"
+          ],
+          "value": "ESSENTIALLY WELL"
+        },
+        {
+          "enabled": true,
+          "id": "qfq8vhc",
+          "keys": [
+            "physical_exam_abdomen_remarks"
+          ],
+          "value": "ESSENTIALLY WELL"
+        },
+        {
+          "enabled": true,
+          "id": "t306qs1",
+          "keys": [
+            "physical_exam_genitalia_remarks"
+          ],
+          "value": "ESSENTIALLY WELL"
+        },
+        {
+          "enabled": true,
+          "id": "jguh9vk",
+          "keys": [
+            "physical_exam_extremities_remarks"
+          ],
+          "value": "ESSENTIALLY WELL"
+        },
+        {
+          "enabled": true,
+          "id": "j8t4l8l",
+          "keys": [
+            "pIsSexuallyActive_SOCHIST"
+          ],
+          "value": "N"
+        },
+        {
+          "enabled": true,
+          "id": "6w8ogyr",
+          "keys": [
+            "pIllDrugUser_SOCHIST"
+          ],
+          "value": "N"
+        },
+        {
+          "enabled": true,
+          "id": "1uytk0s",
+          "keys": [
+            "pIsAdrinker_SOCHIST"
+          ],
+          "value": "N"
+        },
+        {
+          "enabled": true,
+          "id": "foxq5l9",
+          "keys": [
+            "pIsSmoker_SOCHIST"
+          ],
+          "value": "N"
+        },
+        {
+          "enabled": true,
+          "id": "vhum8zz",
+          "keys": [
+            "pRectalRem_PESPECIFIC"
+          ],
+          "value": "ESSENTIALLY WELL"
+        },
+        {
+          "enabled": true,
+          "id": "ri7zx0b",
+          "keys": [
+            "checkbox group"
+          ],
+          "value": "General, YAKAP"
+        },
+        {
+          "enabled": true,
+          "id": "nrulhao",
+          "keys": [
+            "General"
+          ],
+          "value": "Yes"
+        },
+        {
+          "enabled": true,
+          "id": "5ymg0cl",
+          "keys": [
+            "Add System Review"
+          ],
+          "value": "Essentially normal"
+        },
+        {
+          "enabled": true,
+          "id": "wuwrjm0",
+          "keys": [
+            "Heent/Optha"
+          ],
+          "value": "Essentially Normal"
+        },
+        {
+          "enabled": true,
+          "id": "28pjo09",
+          "keys": [
+            "Cardio/Pulmo"
+          ],
+          "value": "Essentially normal"
+        },
+        {
+          "enabled": true,
+          "id": "w5crphc",
+          "keys": [
+            "Neuro-Psychiatric"
+          ],
+          "value": "Essentially normal"
+        },
+        {
+          "enabled": true,
+          "id": "b1s87pw",
+          "keys": [
+            "Genito-Urinary"
+          ],
+          "value": "Essentially normal"
+        },
+        {
+          "enabled": true,
+          "id": "ro5v9km",
+          "keys": [
+            "Chest/Heart"
+          ],
+          "value": "Essentially normal"
+        },
+        {
+          "enabled": true,
+          "id": "5kxutkp",
+          "keys": [
+            "Abdomen"
+          ],
+          "value": "Essentially normal"
+        },
+        {
+          "enabled": true,
+          "id": "fs8xy5x",
+          "keys": [
+            "Digital Recta Description"
+          ],
+          "value": "Essentially normal"
+        }
+      ]
+    }
+  ],
+  "flows": []
+}

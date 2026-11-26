@@ -15,6 +15,11 @@
     <button id="undo" class="ghost">Undo</button>
   </section>
   <div id="status" role="status"></div>
+  <div id="frameRow" class="frame-row" hidden>
+    <label for="frameSel">Frame</label>
+    <select id="frameSel"><option value="all">All frames</option></select>
+    <button id="frameRefresh" class="ghost mini" title="Refresh frame list">↻</button>
+  </div>
   <div id="updBanner" class="update" hidden>
     <span id="updText"></span>
     <button id="updNow">Update now</button>
@@ -34,14 +39,14 @@
 
   <main>
     <section id="tab-rules">
-      <p class="hint">Each rule: any of these field names → this answer. Press Enter to add a name.</p>
+      <p class="hint">Each rule: any of these field names → this answer. Press Enter to add a name. For checkbox groups, list several answers separated by commas (also <code>all</code> or <code>clear</code>).</p>
       <div id="rules"></div>
       <button id="addRule" class="dashed">+ Add rule</button>
     </section>
 
     <section id="tab-detected" hidden>
-      <p class="hint">See each field on this page, what it accepts, and what will be filled. Click an option or suggestion to save it as the answer.</p>
-      <button id="scan" class="ghost wide">Scan this page</button>
+      <p class="hint">Scans automatically when you open this tab. See each field on this page (including radio groups and their options), what it accepts, and what will be filled. Click an option or suggestion to save it as the answer.</p>
+      <button id="scan" class="ghost wide">Rescan this page</button>
       <ul id="found" class="list"></ul>
     </section>
 
@@ -101,6 +106,7 @@
 
   <footer>Shortcut: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> fills the page · change it at chrome://extensions/shortcuts</footer>
   <script src="updater.js"></script>
+  <script src="frames.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

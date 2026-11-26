@@ -38,16 +38,22 @@ function status(msg, kind = "") {
   el.className = kind;
 }
 
+let frameSel = "all";
 async function inPage(name, arg) {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    const res = await chrome.scripting.executeScript({
-      target: { tabId: tab.id, allFrames: true },
-      func: (n, a) => (window.__acf ? window.__acf[n](a) : null),
-      args: [name, arg ?? null]
-    });
-    return res.map(r => r.result).filter(Boolean);
+    const res = await Frames.run(tab.id, name, arg, frameSel);
+    return res.filter(r => r.status === "ok").map(r => r.value);
   } catch { return []; }
+}
+
+// "3/4 frames reachable (modal: timeout)" so you can see why something wasn't found
+function frameNote() {
+  const rs = Frames.last || [];
+  if (!rs.length) return "";
+  const bad = rs.filter(r => r.status !== "ok");
+  return `${rs.length - bad.length}/${rs.length} frames reachable` +
+    (bad.length ? ` (${bad.map(r => `${r.frame.name}: ${r.status}`).join(", ")})` : "");
 }
 
 /* ---------- tabs ---------- */
@@ -168,7 +174,8 @@ function foundItem(f) {
   const meta = h("div", { class: "meta" }, h("b", { title: f.label }, f.label),
     h("small", {}, f.type + (f.itype && f.itype !== f.type && f.type === "text" ? " · " + f.itype : "") +
       (!f.matched && f.concept ? " · looks like: " + f.concept : "") +
-      ((f.type === "radio" || f.type === "checks") && f.current ? " · selected now: " + f.current : "")));
+      ((f.type === "radio" || f.type === "checks") && f.current ? " · selected now: " + f.current : "") +
+      (f.frame && f.frame !== "Top page" ? " · in " + f.frame : "")));
 
   const right = f.matched
     ? h("span", { class: "tag" + (bad ? " bad" : "") }, bad ? "no option match" : "matched")
@@ -221,23 +228,28 @@ function foundItem(f) {
 }
 
 $("#scan").onclick = async () => {
-  const found = (await inPage("scan")).flat();
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  let res = [];
+  try { res = await Frames.run(tab.id, "scan", null, frameSel); } catch {}
+  annotateFrames(res);
+  const found = res.filter(r => r.status === "ok")
+    .flatMap(r => r.value.map(f => ({ ...f, frame: res.length > 1 ? r.frame.name : "" })));
   const ul = $("#found");
   if (!found.length) {
-    ul.replaceChildren(h("li", { class: "empty" }, "Nothing found. Reload the page once, or open a normal website."));
+    ul.replaceChildren(h("li", { class: "empty" }, `Nothing found. ${frameNote()}`));
     return;
   }
-  ul.replaceChildren(...found.map(foundItem));
+  ul.replaceChildren(...found.map(foundItem), h("li", { class: "empty" }, frameNote()));
 };
 
 /* ---------- fill / undo ---------- */
 $("#fill").onclick = async () => {
   status("Filling…");
   const res = await inPage("fill");
-  if (!res.length) return status("Can't run here. Reload the page once, or open a normal website.", "warn");
+  if (!res.length) return status(`Couldn't run on this page. ${frameNote()}`, "warn");
   const n = res.reduce((s, r) => s + (r.count || 0), 0);
   n ? status(`Filled ${n} field${n > 1 ? "s" : ""}`, "ok")
-    : status("No matching fields. Check the Detected tab.", "warn");
+    : status(`No matching fields. Check the Detected tab. ${frameNote()}`, "warn");
 };
 $("#undo").onclick = async () => {
   const res = await inPage("undo");
@@ -475,6 +487,31 @@ function initUpdates(info) {
   renderUpdate(info);
 }
 
+/* ---------- frames (modals, iframes) ---------- */
+async function loadFrames() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const list = await Frames.list(tab.id);
+    const sel = $("#frameSel"), keep = sel.value;
+    sel.replaceChildren(h("option", { value: "all", textContent: "All frames" }),
+      ...list.map(f => h("option", { value: String(f.id), textContent: f.id === 0 ? f.name : `${f.name} (#${f.id})`, title: f.url })));
+    sel.value = [...sel.options].some(o => o.value === keep) ? keep : "all";
+    frameSel = sel.value;
+    $("#frameRow").hidden = list.length < 2;
+  } catch {}
+}
+function annotateFrames(res) {
+  const sel = $("#frameSel");
+  for (const r of res) {
+    const o = [...sel.options].find(o => o.value === String(r.frame.id));
+    if (!o) continue;
+    const base = r.frame.id === 0 ? r.frame.name : `${r.frame.name} (#${r.frame.id})`;
+    o.textContent = base + (r.status === "ok" && Array.isArray(r.value) ? ` · ${r.value.length} fields` : ` · ${r.status}`);
+  }
+}
+$("#frameSel").onchange = e => { frameSel = e.target.value; };
+$("#frameRefresh").onclick = loadFrames;
+
 /* ---------- init ---------- */
 (async () => {
   S = await chrome.storage.local.get(null);
@@ -501,4 +538,5 @@ function initUpdates(info) {
   $("#highlight").checked = S.highlight;
   renderProfiles(); renderRules(); renderSites(); syncSite();
   initUpdates(updateInfo);
+  loadFrames();
 })();

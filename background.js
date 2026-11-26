@@ -1,4 +1,4 @@
-importScripts("updater.js");
+importScripts("updater.js", "frames.js");
 
 // ---- check GitHub every 6 hours; install automatically if folder access was set up ----
 const schedule = () => chrome.alarms.create("acf-update", { periodInMinutes: 360, delayInMinutes: 1 });
@@ -23,11 +23,8 @@ chrome.commands.onCommand.addListener(async cmd => {
   if (cmd !== "fill-page") return;
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    const res = await chrome.scripting.executeScript({
-      target: { tabId: tab.id, allFrames: true },
-      func: () => (window.__acf ? window.__acf.fill() : null)
-    });
-    const n = res.reduce((s, r) => s + (r.result?.count || 0), 0);
+    const res = await Frames.run(tab.id, "fill", null, "all");
+    const n = res.reduce((s, r) => s + (r.value?.count || 0), 0);
     await chrome.action.setBadgeBackgroundColor({ color: "#4f46e5", tabId: tab.id });
     await chrome.action.setBadgeText({ text: String(n), tabId: tab.id });
     setTimeout(() => chrome.action.setBadgeText({ text: "", tabId: tab.id }), 3000);

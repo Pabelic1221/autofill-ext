@@ -131,3 +131,8 @@ input[type=password]:focus{outline:2px solid var(--accent);outline-offset:-1px}
   padding:8px 12px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:12px;font-weight:600}
 .update[hidden]{display:none}
 .update button{background:var(--btn);color:#fff;padding:4px 10px;font-size:12px;flex:none}
+
+/* frame picker */
+.frame-row{display:flex;align-items:center;gap:8px;margin:0 14px 8px;font-size:12px;color:var(--muted)}
+.frame-row[hidden]{display:none}
+.frame-row select{flex:1;max-width:none;min-width:0}

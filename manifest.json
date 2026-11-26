@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Custom Autofill",
-  "version": "2.6",
+  "version": "2.7",
   "description": "Fill inputs, radios, checkboxes and dropdowns from your own reusable rules.",
   "permissions": [
     "storage",
     "scripting",
-    "alarms"
+    "alarms",
+    "webNavigation"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -40,7 +41,9 @@
         "fill.js"
       ],
       "all_frames": true,
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "match_about_blank": true,
+      "match_origin_as_fallback": true
     }
   ]
 }
