@@ -221,7 +221,7 @@
           "value": "Yes"
         },
         {
-          "enabled": true,
+          "enabled": false,
           "id": "x6945rq",
           "keys": [
             "PAST MEDICAL HISTORY"
@@ -237,7 +237,7 @@
           "value": "None"
         },
         {
-          "enabled": true,
+          "enabled": false,
           "id": "dd50ksu",
           "keys": [
             "FAMILY MEDICAL HISTORY"
@@ -339,6 +339,30 @@
             "pGuRem_PESPECIFIC"
           ],
           "value": "ESSENTIALLY NORMAL"
+        },
+        {
+          "enabled": true,
+          "id": "1ztit8d",
+          "keys": [
+            "physical_exam_chest"
+          ],
+          "value": "ESSENTIALLY NORMAL"
+        },
+        {
+          "enabled": true,
+          "id": "imq08id",
+          "keys": [
+            "PAST MEDICAL HISTORY"
+          ],
+          "value": "Others"
+        },
+        {
+          "enabled": true,
+          "id": "29u9840",
+          "keys": [
+            "FAMILY MEDICAL HISTORY"
+          ],
+          "value": "Others"
         }
       ]
     }
