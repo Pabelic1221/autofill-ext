@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Custom Autofill · Presets</title>
+  <link rel="stylesheet" href="popup.css">
+  <style>
+    body{width:auto;max-width:620px;margin:32px auto;padding:0 16px}
+    h1{font-size:20px;margin:0 0 4px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin:12px 0}
+    .card p{margin:4px 0}
+    .drop{border:2px dashed var(--border);text-align:center;padding:28px 14px;border-radius:12px;background:var(--card)}
+    .drop.over{border-color:var(--accent);background:var(--accent-soft)}
+    .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
+    .stats{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+    .stat{background:var(--accent-soft);color:var(--accent);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
+    .stat.warn{background:var(--warn-soft);color:var(--warn)}
+    ul.rules{list-style:none;margin:6px 0;padding:0;font-size:12px}
+    ul.rules li{padding:3px 0;border-bottom:1px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    ul.rules code{color:var(--accent)}
+    label.mode{display:flex;gap:8px;align-items:flex-start;margin:8px 0}
+    label.mode small{display:block;color:var(--muted)}
+    #msg{margin:10px 0;font-weight:600}
+    #msg.ok{color:var(--ok)} #msg.bad{color:var(--danger)}
+    details{margin-top:10px} textarea{min-height:90px}
+  </style>
+</head>
+<body>
+  <h1>Import / export presets</h1>
+  <p class="hint">Load a preset file (.json) that you exported earlier, or share your setup with another computer.</p>
+
+  <div class="card"><p id="current"></p>
+    <div class="row"><button id="download" class="ghost">Download current preset</button></div>
+  </div>
+
+  <div id="drop" class="drop">
+    <p><b>Drop your preset file here</b></p>
+    <p class="hint">or</p>
+    <button id="choose" class="primary" style="flex:none">Choose file…</button>
+    <input type="file" id="file" accept=".json,application/json" hidden>
+    <details><summary class="hint">Paste JSON instead</summary>
+      <textarea id="paste" spellcheck="false" placeholder='{"profiles":[…]}'></textarea>
+      <div class="row"><button id="loadPaste" class="ghost">Load pasted text</button></div>
+    </details>
+  </div>
+
+  <div id="preview" class="card" hidden>
+    <p><b id="fname"></b></p>
+    <div class="stats" id="stats"></div>
+    <div id="plist"></div>
+    <p class="hint">Preview (first rules):</p>
+    <ul class="rules" id="rulePreview"></ul>
+
+    <h4>How to import</h4>
+    <label class="mode"><input type="radio" name="mode" value="add" checked>
+      <span>Add as new profile(s)<small>Keeps everything you have now. Safest choice.</small></span></label>
+    <label class="mode"><input type="radio" name="mode" value="merge">
+      <span>Merge into my current profile<small>Adds missing rules and updates answers for rules with the same field names.</small></span></label>
+    <label class="mode"><input type="radio" name="mode" value="replace">
+      <span>Replace everything<small>Deletes your current profiles and flows first.</small></span></label>
+    <label class="check"><input type="checkbox" id="activate" checked> Switch to the imported profile</label>
+
+    <div class="row"><button id="apply" class="primary" style="flex:none">Import preset</button></div>
+  </div>
+
+  <div id="msg" role="status"></div>
+  <script src="preset-core.js"></script>
+  <script src="presets.js"></script>
+</body>
+</html>

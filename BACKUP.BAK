@@ -18,7 +18,7 @@
           "keys": [
             "physical_exam_head"
           ],
-          "value": "ESSENTIALLY WELL"
+          "value": "ESSENTIALLY NORMAL"
         },
         {
           "enabled": true,
@@ -26,7 +26,7 @@
           "keys": [
             "physical_exam_conjuctiva_remarks"
           ],
-          "value": "ESSENTIALLY WELL"
+          "value": "ESSENTIALLY NORMAL"
         },
         {
           "enabled": true,
@@ -34,7 +34,7 @@
           "keys": [
             "physical_exam_breast_remarks"
           ],
-          "value": "ESSENTIALLY WELL"
+          "value": "ESSENTIALLY NORMAL"
         },
         {
           "enabled": true,
@@ -42,7 +42,7 @@
           "keys": [
             "physical_exam_thorax_remarks"
           ],
-          "value": "ESSENTIALLY WELL"
+          "value": "ESSENTIALLY NORMAL"
         },
         {
           "enabled": true,
@@ -50,7 +50,7 @@
           "keys": [
             "physical_exam_thorax_remarks"
           ],
-          "value": "ESSENTIALLY WELL"
+          "value": "ESSENTIALLY NORMAL"
         },
         {
           "enabled": true,
@@ -58,7 +58,7 @@
           "keys": [
             "physical_exam_abdomen_remarks"
           ],
-          "value": "ESSENTIALLY WELL"
+          "value": "ESSENTIALLY NORMAL"
         },
         {
           "enabled": true,
@@ -66,7 +66,7 @@
           "keys": [
             "physical_exam_genitalia_remarks"
           ],
-          "value": "ESSENTIALLY WELL"
+          "value": "ESSENTIALLY NORMAL"
         },
         {
           "enabled": true,
@@ -74,7 +74,7 @@
           "keys": [
             "physical_exam_extremities_remarks"
           ],
-          "value": "ESSENTIALLY WELL"
+          "value": "ESSENTIALLY NORMAL"
         },
         {
           "enabled": true,
@@ -114,7 +114,7 @@
           "keys": [
             "pRectalRem_PESPECIFIC"
           ],
-          "value": "ESSENTIALLY WELL"
+          "value": "ESSENTIALLY NORMAL"
         },
         {
           "enabled": true,
@@ -138,7 +138,7 @@
           "keys": [
             "Add System Review"
           ],
-          "value": "Essentially normal"
+          "value": "ESSENTIALLY NORMAL"
         },
         {
           "enabled": true,
@@ -195,6 +195,150 @@
             "Digital Recta Description"
           ],
           "value": "Essentially normal"
+        },
+        {
+          "enabled": true,
+          "id": "ckbw12z",
+          "keys": [
+            "pManagementId_MANAGEMENT"
+          ],
+          "value": "NOT APPLICABLE"
+        },
+        {
+          "enabled": true,
+          "id": "sdj9bky",
+          "keys": [
+            "PRESCRIBED LABORATORY TO THE PATIENT"
+          ],
+          "value": "Not Applicable"
+        },
+        {
+          "enabled": true,
+          "id": "rg5g2mw",
+          "keys": [
+            "YAKAP"
+          ],
+          "value": "Yes"
+        },
+        {
+          "enabled": true,
+          "id": "x6945rq",
+          "keys": [
+            "PAST MEDICAL HISTORY"
+          ],
+          "value": "None"
+        },
+        {
+          "enabled": true,
+          "id": "q67ycwa",
+          "keys": [
+            "SPECIFIC DISEASE"
+          ],
+          "value": "None"
+        },
+        {
+          "enabled": true,
+          "id": "dd50ksu",
+          "keys": [
+            "FAMILY MEDICAL HISTORY"
+          ],
+          "value": "None"
+        },
+        {
+          "enabled": true,
+          "id": "yhuqant",
+          "keys": [
+            "FAMILIY SPECIFIC DISEASE"
+          ],
+          "value": "None"
+        },
+        {
+          "enabled": true,
+          "id": "7ws1fe8",
+          "keys": [
+            "pSkinRem_PESPECIFIC"
+          ],
+          "value": "ESSENTIALLY NORMAL"
+        },
+        {
+          "enabled": true,
+          "id": "qo8qjcb",
+          "keys": [
+            "pHeartRem_PESPECIFIC"
+          ],
+          "value": "ESSENTIALLY NORMAL"
+        },
+        {
+          "enabled": true,
+          "id": "9hic7on",
+          "keys": [
+            "pSkinRem_PESPECIFIC"
+          ],
+          "value": "ESSENTIALLY NORMAL"
+        },
+        {
+          "enabled": true,
+          "id": "f1yfnr0",
+          "keys": [
+            "pChestRem_PESPECIFIC"
+          ],
+          "value": "ESSENTIALLY NORMAL"
+        },
+        {
+          "enabled": true,
+          "id": "926es1m",
+          "keys": [
+            "Chest Description"
+          ],
+          "value": "Essentially normal"
+        },
+        {
+          "enabled": true,
+          "id": "i0qtk71",
+          "keys": [
+            "Heent Description"
+          ],
+          "value": "Essentially Normal"
+        },
+        {
+          "enabled": true,
+          "id": "9sp8ftr",
+          "keys": [
+            "Set Essentially Normal"
+          ],
+          "value": "Essentially normal"
+        },
+        {
+          "enabled": true,
+          "id": "vrckjnv",
+          "keys": [
+            "Heart Description"
+          ],
+          "value": "Essentially normal"
+        },
+        {
+          "enabled": true,
+          "id": "6c3k60t",
+          "keys": [
+            "Neurological Description"
+          ],
+          "value": "Essentially normal"
+        },
+        {
+          "enabled": true,
+          "id": "tl7apcw",
+          "keys": [
+            "pNeuroRem_PESPECIFIC"
+          ],
+          "value": "ESSENTIALLY NORMAL"
+        },
+        {
+          "enabled": true,
+          "id": "xcgm85l",
+          "keys": [
+            "pGuRem_PESPECIFIC"
+          ],
+          "value": "ESSENTIALLY NORMAL"
         }
       ]
     }

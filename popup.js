@@ -512,6 +512,16 @@ function annotateFrames(res) {
 $("#frameSel").onchange = e => { frameSel = e.target.value; };
 $("#frameRefresh").onclick = loadFrames;
 
+/* ---------- preset files ---------- */
+$("#importFile").onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL("presets.html") });
+$("#exportFile").onclick = () => {
+  const blob = new Blob([JSON.stringify({ profiles: S.profiles, flows: S.flows }, null, 2)], { type: "application/json" });
+  const a = h("a", { href: URL.createObjectURL(blob), download: `autofill-preset-${new Date().toISOString().slice(0, 10)}.json` });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  status("Preset downloaded", "ok");
+};
+
 /* ---------- init ---------- */
 (async () => {
   S = await chrome.storage.local.get(null);
