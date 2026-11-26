@@ -51,7 +51,9 @@ async function inPage(name, arg) {
 }
 
 /* ---------- tabs ---------- */
+let scanned = false;
 function showTab(name) {
+  if (name === "detected" && !scanned) { scanned = true; setTimeout(() => $("#scan").click(), 0); }   // auto-scan on first open
   document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === name));
   document.querySelectorAll("main > section").forEach(s => (s.hidden = s.id !== "tab-" + name));
 }
@@ -84,7 +86,7 @@ function ruleCard(rule) {
   chips.append(...rule.keys.map(chip), input);
 
   const answer = h("input", {
-    class: "answer", value: rule.value, placeholder: "Answer (e.g. Male, yes, 09123…)",
+    class: "answer", value: rule.value, placeholder: "Answer (e.g. Male, yes, Asthma, Cancer)",
     oninput: e => { rule.value = e.target.value; persist(); }
   });
   const toggle = h("span", { class: "switch", title: "Enable / disable rule" },
@@ -151,7 +153,7 @@ function foundItem(f) {
     let r = f.ruleId && p.rules.find(x => x.id === f.ruleId);
     if (r) r.value = value;
     else {
-      r = { id: uid(), keys: [f.label], value, enabled: true };
+      r = { id: uid(), keys: [f.ruleKey || f.label], value, enabled: true };
       p.rules.push(r);
       f.ruleId = r.id; f.matched = true;
     }
@@ -165,12 +167,13 @@ function foundItem(f) {
   const dot = h("span", { class: "dot" + (bad ? " bad" : f.matched ? " ok" : "") });
   const meta = h("div", { class: "meta" }, h("b", { title: f.label }, f.label),
     h("small", {}, f.type + (f.itype && f.itype !== f.type && f.type === "text" ? " · " + f.itype : "") +
-      (!f.matched && f.concept ? " · looks like: " + f.concept : "")));
+      (!f.matched && f.concept ? " · looks like: " + f.concept : "") +
+      ((f.type === "radio" || f.type === "checks") && f.current ? " · selected now: " + f.current : "")));
 
   const right = f.matched
     ? h("span", { class: "tag" + (bad ? " bad" : "") }, bad ? "no option match" : "matched")
     : h("button", { class: "mini", onclick: () => {
-        const r = { id: uid(), keys: [f.label], value: "", enabled: true };
+        const r = { id: uid(), keys: [f.ruleKey || f.label], value: "", enabled: true };
         profile().rules.push(r); persist(); renderRules();
         showTab("rules");
         $("#rules").lastElementChild.querySelector(".answer").focus();
@@ -180,18 +183,29 @@ function foundItem(f) {
 
   if (f.matched) {
     li.append(h("div", { class: "line" + (bad ? " bad" : "") },
-      bad ? `“${f.value}” isn’t one of the options, pick one below`
+      bad ? (f.missing && f.missing.length ? `Not found on this page: ${f.missing.join(", ")}` : `“${f.value}” isn’t one of the options, pick one below`)
           : f.value === "" ? "Rule has no answer yet" : `Will fill: “${f.value}”` + (HOW[f.how] ? ` · via ${HOW[f.how]}` : "")));
   }
 
+  if (!f.matched && f.partial) li.append(h("div", { class: "line" }, `${f.partial} option(s) matched by their own rules`));
+
   const choices = f.options || suggestionsFor(f);
+  const multi = f.type === "checks";
+  const parts = () => String(f.value ?? "").split(/[,;|\n]+/).map(s => s.trim()).filter(Boolean);
+  const toggle = v => {
+    const p = parts(), i = p.findIndex(x => nk(x) === nk(v));
+    i >= 0 ? p.splice(i, 1) : p.push(v);
+    save(p.join(", "));
+  };
   if (choices.length) {
     const LIMIT = 10;
     const row = h("div", { class: "opts" },
-      h("small", {}, f.options ? "Options:" : "Suggestions:"));
+      h("small", {}, multi ? "Options (pick several):" : f.options ? "Options:" : "Suggestions:"));
     const chip = v => h("button", {
-      class: "opt" + (f.matched && f.value != null && nk(f.value) === nk(v) ? " on" : ""),
-      title: "Use this as the answer", onclick: () => save(v)
+      class: "opt" + (multi ? (f.matched && parts().some(x => nk(x) === nk(v)) ? " on" : "")
+        : (f.matched && f.value != null && nk(f.value) === nk(v) ? " on" : "")),
+      title: multi ? "Add or remove from the answer" : "Use this as the answer",
+      onclick: () => (multi ? toggle(v) : save(v))
     }, v);
     choices.slice(0, LIMIT).forEach(v => row.append(chip(v)));
     if (choices.length > LIMIT) {

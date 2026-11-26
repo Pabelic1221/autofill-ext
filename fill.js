@@ -37,7 +37,24 @@
   const groupLabelOf = el =>
     (txt(el.closest("fieldset")?.querySelector("legend")) ||
       el.closest('[role="radiogroup"]')?.getAttribute("aria-label") || el.name || "radio group").slice(0, 60);
-  const optLabel = r => labelsOf(r).find(Boolean) || r.value;
+  // every text that could name one radio option (native <input> or custom role="radio")
+  function radioLabels(r) {
+    const out = [];
+    if (r.tagName === "INPUT") {
+      out.push(...labelsOf(r), r.getAttribute("aria-label"));
+      let n = r.nextSibling;                                   // <input> Male   (text right after it)
+      while (n && n.nodeType === 3 && !n.textContent.trim()) n = n.nextSibling;
+      if (n) out.push(n.nodeType === 3 ? n.textContent : (n.tagName === "INPUT" ? "" : txt(n)));
+      const par = r.parentElement;                             // <div><input><span>Male</span></div>
+      if (par && par.querySelectorAll("input").length === 1) out.push(txt(par));
+    } else {
+      out.push(r.getAttribute("aria-label"), txt(r), r.getAttribute("data-value"), r.getAttribute("data-answer-value"));
+    }
+    return out.map(x => (x || "").replace(/\s+/g, " ").trim()).filter(x => x && x.length <= 80);
+  }
+  const rValue = r => (r.tagName === "INPUT" ? r.value : (r.getAttribute("data-value") || r.getAttribute("aria-label") || txt(r)));
+  const rChecked = r => (r.tagName === "INPUT" ? r.checked : r.getAttribute("aria-checked") === "true");
+  const optLabel = r => radioLabels(r)[0] || rValue(r);
   const mk = raw => { const pieces = raw.map(norm); return { raw, pieces, hay: pieces.join(" ") }; };
 
   // ---------- smart matching: synonyms, autocomplete hints, typos ----------
@@ -187,11 +204,102 @@
     return true;
   }
 
+  // ---------- checkbox groups (many options under one heading, e.g. "Disease Code") ----------
+  const JUNK = new Set(["check", "uncheck", "select", "deselect", "all", "clear", "toggle"]);
+  const cleanHead = s => (s || "").replace(/\s+/g, " ").replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, "").trim();
+  const junkText = s => { const tk = tokens(s); return !tk.length || tk.every(w => JUNK.has(w)); };
+
+  // text between two neighbouring checkboxes that is NOT the options' own labels = a new heading
+  function gapText(a, b) {
+    try {
+      const r = document.createRange();
+      r.setStartAfter(a); r.setEndBefore(b);
+      let t = r.toString();
+      for (const x of [...radioLabels(a), ...radioLabels(b)]) t = t.split(x).join(" ");
+      t = t.replace(/\([^)]*\)/g, " ");                      // "(specify)" doesn't count
+      return t.replace(/[^A-Za-z0-9]/g, "").length >= 3 ? t : "";
+    } catch { return ""; }
+  }
+
+  function clusterBoxes(boxes) {
+    const out = []; let cur = [];
+    for (const b of boxes) {
+      const last = cur[cur.length - 1];
+      if (last && (last.form !== b.form || gapText(last, b))) { out.push(cur); cur = []; }
+      cur.push(b);
+    }
+    if (cur.length) out.push(cur);
+    return out;
+  }
+
+  // nearest meaningful texts above the first checkbox: "Disease Code:" then "» PAST MEDICAL HISTORY «"
+  function headingsBefore(first, optionTexts, max) {
+    const out = [];
+    try {
+      const w = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+      w.currentNode = first;
+      for (let steps = 0, n; steps < 80 && out.length < max && (n = w.previousNode()); steps++) {
+        if (n.nodeType === 1) {
+          const ty = (n.type || "").toLowerCase();
+          if (n.tagName === "SELECT" || n.tagName === "TEXTAREA" ||
+              (n.tagName === "INPUT" && !["button", "submit", "reset", "image", "hidden"].includes(ty))) break;   // another field
+          continue;
+        }
+        if (n.parentElement && /^(SCRIPT|STYLE|NOSCRIPT)$/.test(n.parentElement.tagName)) continue;
+        const t = cleanHead(n.textContent);
+        if (!t || junkText(t) || optionTexts.has(t.toLowerCase())) continue;
+        if (t.length > 80) break;
+        out.push(t);
+      }
+    } catch {}
+    return out;
+  }
+
+  // one ordinary field (select / text / single checkbox)
+  function single(el) {
+    const type = (el.type || "").toLowerCase();
+    const kind = type === "checkbox" ? "checkbox" : el.tagName === "SELECT" ? "select" : "text";
+    const raw = kind === "checkbox" ? [...new Set([...fieldRaw(el), ...radioLabels(el)])] : fieldRaw(el);
+    const t = { kind, el, ...mk(raw), label: kind === "checkbox" ? optLabel(el) : labelOf(el), itype: type || el.tagName.toLowerCase() };
+    if (kind === "select")
+      t.options = [...el.options].filter(o => o.value !== "" && !o.disabled).map(o => txt(o)).filter(Boolean);
+    if (kind === "checkbox") t.options = ["Yes", "No"];
+    return t;
+  }
+
+  function groupTarget(els, optionTexts) {
+    const heads = headingsBefore(els[0], optionTexts, 2);
+    const label = heads[0] || "checkbox group", section = heads[1] || "";
+    return {
+      kind: "checks", el: els[0], els, ...mk([label, section].filter(Boolean)),
+      label: (section ? `${section} · ${label}` : label).slice(0, 70),
+      ruleKey: section || heads[0] || "", options: els.map(optLabel), members: els.map(single)
+    };
+  }
+
   function targets() {
     const out = [], seen = new Set();
+
+    // groups of 3+ checkboxes under one heading
+    const inGroup = new Map();
+    const boxes = [...document.querySelectorAll('input[type="checkbox"]')].filter(eligible);
+    let optionTexts = null;
+    for (const cl of clusterBoxes(boxes)) {
+      if (cl.length < 3) continue;
+      optionTexts ||= new Set([...document.querySelectorAll('input[type="checkbox"], input[type="radio"]')]
+        .flatMap(radioLabels).map(s => s.toLowerCase()));
+      const g = groupTarget(cl, optionTexts);
+      cl.forEach(b => inGroup.set(b, g));
+    }
+
     for (const el of document.querySelectorAll("input, select, textarea")) {
       if (!eligible(el)) continue;
       const type = (el.type || "").toLowerCase();
+      if (type === "checkbox" && inGroup.has(el)) {
+        const g = inGroup.get(el);
+        if (!g.pushed) { g.pushed = true; out.push(g); }
+        continue;
+      }
       if (type === "radio") {
         if (!el.name) continue;
         const key = [...document.forms].indexOf(el.form) + "|" + el.name;
@@ -201,13 +309,15 @@
           .filter(r => r.name === el.name && r.form === el.form);
         out.push({ kind: "radio", el, els, ...mk(groupRaw(el)), label: groupLabelOf(el), options: els.map(optLabel) });
       } else {
-        const kind = type === "checkbox" ? "checkbox" : el.tagName === "SELECT" ? "select" : "text";
-        const t = { kind, el, ...mk(fieldRaw(el)), label: labelOf(el), itype: type || el.tagName.toLowerCase() };
-        if (kind === "select")
-          t.options = [...el.options].filter(o => o.value !== "" && !o.disabled).map(o => txt(o)).filter(Boolean);
-        if (kind === "checkbox") t.options = ["Yes", "No"];
-        out.push(t);
+        out.push(single(el));
       }
+    }
+    // custom radio groups built from <div role="radio"> (Google Forms and similar)
+    for (const rg of document.querySelectorAll('[role="radiogroup"]')) {
+      const els = [...rg.querySelectorAll('[role="radio"]')].filter(e => e.tagName !== "INPUT");
+      if (!els.length || !rg.getClientRects().length) continue;
+      const raw = [rg.getAttribute("aria-label"), ...byIds(rg.getAttribute("aria-labelledby")), rg.id].filter(Boolean);
+      out.push({ kind: "radio", el: rg, els, ...mk(raw), label: (raw[0] || "radio group").slice(0, 60), options: els.map(optLabel) });
     }
     return out;
   }
@@ -251,6 +361,25 @@
       return true;
     }
 
+    if (t.kind === "checks") {
+      if (skip && t.els.some(e => e.checked)) return false;
+      const items = checkItems(t), v = value.trim();
+      const setBox = (el, want) => {
+        if (el.checked === want) return;
+        const was = el.checked;
+        el.click();
+        undoStack.push(() => { if (el.checked !== was) el.click(); });
+      };
+      if (/^(clear|uncheck all)$/i.test(v) && !pickBest(items, v)) { t.els.forEach(e => setBox(e, false)); return true; }
+      if (/^all$/i.test(v) && !pickBest(items, v)) { t.els.forEach(e => setBox(e, true)); flash(t.els[0], d); return true; }
+      let n = 0;
+      for (const p of splitAnswers(v)) {
+        const best = pickBest(items, p);
+        if (best) { setBox(best.r, true); flash((best.r.labels && best.r.labels[0]) || best.r, d); n++; }
+      }
+      return n > 0;
+    }
+
     if (t.kind === "checkbox") {
       const el = t.el;
       const want = /^(yes|true|1|on|check|checked)$/i.test(value.trim());
@@ -264,26 +393,37 @@
     }
 
     // radio group
-    if (skip && t.els.some(r => r.checked)) return false;
+    if (skip && t.els.some(rChecked)) return false;
     const best = pickBest(
-      t.els.map(r => ({ r, names: [norm(r.value), ...labelsOf(r).map(norm)] })), value);
+      t.els.map(r => ({ r, names: [norm(rValue(r)), ...radioLabels(r).map(norm)] })), value);
     if (!best) return false;
-    const prev = t.els.find(r => r.checked);
+    const prev = t.els.find(rChecked);
     best.r.click();
     undoStack.push(() => {
       if (prev) prev.click();
-      else { best.r.checked = false; best.r.dispatchEvent(new Event("change", { bubbles: true })); }
+      else if (best.r.tagName === "INPUT") { best.r.checked = false; best.r.dispatchEvent(new Event("change", { bubbles: true })); }
     });
-    flash(best.r.labels?.[0] || best.r, d);
+    flash((best.r.labels && best.r.labels[0]) || best.r, d);
     return true;
   }
 
   // would this answer pick a real option? (dry run, changes nothing)
+  const splitAnswers = v => String(v).split(/[,;|\n]+/).map(s => s.trim()).filter(Boolean);
+  const checkItems = t => t.els.map(r => ({ r, names: [norm(rValue(r)), ...radioLabels(r).map(norm)] }));
+  // answers in a checkbox-group rule that match none of the options
+  function checksMissing(t, value) {
+    const v = String(value).trim();
+    if (/^(clear|uncheck all|all)$/i.test(v)) return [];
+    const items = checkItems(t);
+    return splitAnswers(v).filter(p => !pickBest(items, p));
+  }
+
   function resolves(t, value) {
+    if (t.kind === "checks") return checksMissing(t, value).length === 0;
     if (t.kind === "select")
       return !!pickBest([...t.el.options].map(o => ({ names: [norm(o.value), norm(o.text)] })), value);
     if (t.kind === "radio")
-      return !!pickBest(t.els.map(r => ({ names: [norm(r.value), ...labelsOf(r).map(norm)] })), value);
+      return !!pickBest(t.els.map(r => ({ names: [norm(rValue(r)), ...radioLabels(r).map(norm)] })), value);
     return true;
   }
 
@@ -296,6 +436,13 @@
       if (auto && filled.has(t.el)) continue;
       const hit = findRule(rules, t, d.smart !== false);
       if (hit && apply(t, hit.rule.value, d)) { filled.add(t.el); count++; }
+      else if (t.members && !hit) {                      // no rule for the whole group: try each option's own rule
+        for (const m of t.members) {
+          if (auto && filled.has(m.el)) continue;
+          const h2 = findRule(rules, m, d.smart !== false);
+          if (h2 && apply(m, h2.rule.value, d)) { filled.add(m.el); count++; }
+        }
+      }
     }
     return { count };
   }
@@ -314,6 +461,11 @@
       const c = [...conceptsOf(t).win][0];
       return {
         label: t.label, type: t.kind, itype: t.itype || "", options: t.options || null,
+        current: t.kind === "radio" ? (() => { const c = t.els.find(rChecked); return c ? optLabel(c) : null; })()
+          : t.kind === "checks" ? (t.els.filter(rChecked).map(optLabel).join(", ") || null) : null,
+        ruleKey: t.ruleKey || null,
+        missing: t.kind === "checks" && hit ? checksMissing(t, hit.rule.value) : null,
+        partial: t.members && !hit ? t.members.filter(m => findRule(rules, m, d.smart !== false)).length : 0,
         concept: c ? CONCEPTS[c].label : null,
         matched: !!hit, how: hit?.how || null, ruleId: hit?.rule.id || null,
         value: hit ? hit.rule.value : null,
